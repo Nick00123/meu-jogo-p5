@@ -1,0 +1,11 @@
+body {
+  background-color: #111;
+  color: white;
+  font-family: sans-serif;
+  text-align: center;
+}
+
+#game-container {
+  display: inline-block;
+  margin-top: 20px;
+}
