@@ -30,41 +30,6 @@ class Player {
 
     for (let p of this.projectiles) p.draw();
   }
-
-  shoot() {
-    if (millis() - this.lastShot > this.shootCooldown) {
-      // Verificação mais robusta de inimigos
-      if (!enemies || !Array.isArray(enemies) || enemies.length === 0) return;
-
-      // Encontra o inimigo mais próximo
-      let closest = null;
-      let minDist = Infinity;
-      for (let e of enemies) {
-        // Verifica se o inimigo é válido
-        if (!e || typeof e.x !== 'number' || typeof e.y !== 'number') continue;
-        
-        let d = dist(this.x, this.y, e.x, e.y);
-        if (d < minDist) {
-          minDist = d;
-          closest = e;
-        }
-      }
-
-      // Se não encontrou inimigo válido, não atira
-      if (!closest) return;
-
-      // Calcula direção para o inimigo mais próximo
-      let dx = closest.x - this.x;
-      let dy = closest.y - this.y;
-      let mag = sqrt(dx * dx + dy * dy);
-      let speed = CONFIG.PROJECTILE.PLAYER.SPEED;
-      let vx = (dx / mag) * speed;
-      let vy = (dy / mag) * speed;
-
-      this.projectiles.push(new Projectile(this.x, this.y, vx, vy));
-      this.lastShot = millis();
-    }
-  }
 }
 
 // PowerUp
@@ -105,10 +70,6 @@ class FastEnemy extends Enemy {
     this.health = CONFIG.ENEMY.FAST.HEALTH;
     this.maxHealth = CONFIG.ENEMY.FAST.HEALTH;
   }
-  
-  shoot() {
-    // Fast enemies don't shoot
-  }
 }
 
 // BossEnemy
@@ -138,14 +99,18 @@ class BossEnemy extends Enemy {
         let vx = (dx / mag) * speed;
         let vy = (dy / mag) * speed;
 
-        // Add projectile to global enemyProjectiles array
-        enemyProjectiles.push(new Projectile(this.x, this.y, vx, vy, true));
+        // Usar object pool para projéteis de inimigos
+        let projectile = projectilePool.get();
+        projectile.x = this.x;
+        projectile.y = this.y;
+        projectile.vx = vx;
+        projectile.vy = vy;
+        projectile.isEnemyProjectile = true;
+        projectile.size = CONFIG.PROJECTILE.ENEMY.SIZE;
+        projectile.remove = false;
+        
         this.lastShot = millis();
       }
     }
-  }
-
-  shoot() {
-    // Boss shooting is handled in update method
   }
 }

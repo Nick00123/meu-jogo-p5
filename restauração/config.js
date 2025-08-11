@@ -71,6 +71,48 @@ const CONFIG = {
     }
   },
 
+  // Configurações do Sistema de Armas
+  WEAPONS: {
+    RIFLE: {
+      NAME: 'RIFLE',
+      COOLDOWN: 300,
+      PROJECTILE_COUNT: 1,
+      SPREAD_ANGLE: 0,
+      PROJECTILE_SPEED: 8,
+      PROJECTILE_SIZE: 10,
+      COLOR: [255, 255, 0],
+      DAMAGE: 1
+    },
+    SHOTGUN: {
+      NAME: 'SHOTGUN',
+      COOLDOWN: 600,
+      PROJECTILE_COUNT: 5,
+      SPREAD_ANGLE: 30, // graus
+      PROJECTILE_SPEED: 7,
+      PROJECTILE_SIZE: 8,
+      COLOR: [255, 150, 0],
+      DAMAGE: 1
+    },
+    MACHINE_GUN: {
+      NAME: 'MACHINE GUN',
+      COOLDOWN: 100,
+      PROJECTILE_COUNT: 1,
+      SPREAD_ANGLE: 5, // pequeno spread para realismo
+      PROJECTILE_SPEED: 9,
+      PROJECTILE_SIZE: 6,
+      COLOR: [255, 0, 0],
+      DAMAGE: 1
+    },
+    LASER: {
+      NAME: 'LASER',
+      COOLDOWN: 50,
+      BEAM_LENGTH: 300,
+      BEAM_WIDTH: 4,
+      COLOR: [0, 255, 255],
+      DAMAGE: 2
+    }
+  },
+
   // Configurações das Partículas
   PARTICLE: {
     MIN_SIZE: 2,

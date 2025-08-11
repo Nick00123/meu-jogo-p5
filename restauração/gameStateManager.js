@@ -265,16 +265,18 @@ class GameOverState extends GameState {
     this.selectedOption = 0;
     this.gameOverOptions = ['JOGAR NOVAMENTE', 'MENU PRINCIPAL'];
     this.finalScore = 0;
+    this.finalLevel = 0;
     this.isNewHighScore = false;
   }
 
   enter() {
     this.selectedOption = 0;
     this.finalScore = score;
-    this.isNewHighScore = score > highscore;
+    this.finalLevel = level;
+    this.isNewHighScore = score > highScore; 
     if (this.isNewHighScore) {
-      highscore = score;
-      localStorage.setItem('highscore', highscore);
+      highScore = score; 
+      localStorage.setItem('highScore', highScore);
     }
   }
 
@@ -285,42 +287,78 @@ class GameOverState extends GameState {
   draw() {
     background(20, 20, 40);
     
+    // Overlay escuro para melhor legibilidade
+    fill(0, 0, 0, 150);
+    rect(0, 0, width, height);
+    
     push();
     textAlign(CENTER, CENTER);
     
-    // Título Game Over
+    // Título Game Over com efeito
     textSize(48);
-    fill(255, 0, 0);
+    fill(255, 50, 50);
+    text('GAME OVER', width / 2 + 2, height / 4 + 2); 
+    fill(255, 100, 100);
     text('GAME OVER', width / 2, height / 4);
     
-    // Score
-    textSize(24);
-    fill(255);
-    text('Score: ' + this.finalScore, width / 2, height / 2 - 60);
+    // Caixa de informações
+    fill(40, 40, 60, 200);
+    stroke(100, 100, 150);
+    strokeWeight(2);
+    rect(width / 2 - 200, height / 2 - 120, 400, 200, 10);
+    noStroke();
+    
+    // Estatísticas detalhadas
+    textSize(20);
+    fill(255, 255, 255);
+    text('ESTATÍSTICAS FINAIS', width / 2, height / 2 - 90);
+    
+    textSize(16);
+    fill(255, 255, 0);
+    text('Score Final: ' + this.finalScore, width / 2, height / 2 - 60);
+    
+    fill(100, 255, 100);
+    text('Nível Alcançado: ' + this.finalLevel, width / 2, height / 2 - 40);
     
     if (this.isNewHighScore) {
-      fill(255, 255, 0);
-      text('NOVO RECORDE!', width / 2, height / 2 - 30);
+      fill(255, 215, 0);
+      textSize(18);
+      text('🏆 NOVO RECORDE! 🏆', width / 2, height / 2 - 15);
     }
     
-    fill(200);
-    text('High Score: ' + highscore, width / 2, height / 2);
+    fill(200, 200, 200);
+    textSize(14);
+    text('High Score Anterior: ' + highScore, width / 2, height / 2 + 5);
     
-    // Opções
-    textSize(20);
+    // Linha separadora
+    stroke(100, 100, 150);
+    strokeWeight(1);
+    line(width / 2 - 150, height / 2 + 25, width / 2 + 150, height / 2 + 25);
+    noStroke();
+    
+    // Opções com melhor visual
+    textSize(18);
     for (let i = 0; i < this.gameOverOptions.length; i++) {
+      let yPos = height / 2 + 50 + i * 30;
+      
       if (i === this.selectedOption) {
+        // Destaque para opção selecionada
+        fill(255, 255, 0, 100);
+        rect(width / 2 - 120, yPos - 12, 240, 24, 5);
+        
         fill(255, 255, 0);
-        text('> ' + this.gameOverOptions[i] + ' <', width / 2, height / 2 + 60 + i * 35);
+        text('▶ ' + this.gameOverOptions[i] + ' ◀', width / 2, yPos);
       } else {
-        fill(200);
-        text(this.gameOverOptions[i], width / 2, height / 2 + 60 + i * 35);
+        fill(180, 180, 180);
+        text(this.gameOverOptions[i], width / 2, yPos);
       }
     }
     
-    textSize(16);
-    fill(150);
-    text('SETAS para navegar, ENTER para selecionar', width / 2, height - 50);
+    // Instruções
+    textSize(12);
+    fill(150, 150, 150);
+    text('Use ↑↓ para navegar, ENTER para selecionar', width / 2, height - 30);
+    
     pop();
   }
 

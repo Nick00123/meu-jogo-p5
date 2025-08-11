@@ -1,4 +1,234 @@
 // ===========================================
+// SISTEMA DE ARMAS
+// ===========================================
+
+class Weapon {
+  constructor(type) {
+    this.type = type;
+    this.config = CONFIG.WEAPONS[type];
+    this.lastShot = 0;
+  }
+  
+  canShoot() {
+    return millis() - this.lastShot > this.config.COOLDOWN;
+  }
+  
+  shoot(x, y, targetX, targetY) {
+    if (!this.canShoot()) return;
+    
+    this.lastShot = millis();
+    
+    switch(this.type) {
+      case 'RIFLE':
+        this.shootRifle(x, y, targetX, targetY);
+        break;
+      case 'SHOTGUN':
+        this.shootShotgun(x, y, targetX, targetY);
+        break;
+      case 'MACHINE_GUN':
+        this.shootMachineGun(x, y, targetX, targetY);
+        break;
+      case 'LASER':
+        this.shootLaser(x, y, targetX, targetY);
+        break;
+    }
+  }
+  
+  shootRifle(x, y, targetX, targetY) {
+    let dx = targetX - x;
+    let dy = targetY - y;
+    let mag = sqrt(dx * dx + dy * dy);
+    
+    if (mag > 0) {
+      let vx = (dx / mag) * this.config.PROJECTILE_SPEED;
+      let vy = (dy / mag) * this.config.PROJECTILE_SPEED;
+      
+      let projectile = projectilePool.get();
+      projectile.x = x;
+      projectile.y = y;
+      projectile.vx = vx;
+      projectile.vy = vy;
+      projectile.isEnemyProjectile = false;
+      projectile.size = this.config.PROJECTILE_SIZE;
+      projectile.color = this.config.COLOR;
+      projectile.damage = this.config.DAMAGE;
+      projectile.remove = false;
+    }
+  }
+  
+  shootShotgun(x, y, targetX, targetY) {
+    let baseAngle = atan2(targetY - y, targetX - x);
+    let spreadRad = radians(this.config.SPREAD_ANGLE);
+    
+    for (let i = 0; i < this.config.PROJECTILE_COUNT; i++) {
+      let angleOffset = map(i, 0, this.config.PROJECTILE_COUNT - 1, -spreadRad/2, spreadRad/2);
+      let angle = baseAngle + angleOffset;
+      
+      let vx = cos(angle) * this.config.PROJECTILE_SPEED;
+      let vy = sin(angle) * this.config.PROJECTILE_SPEED;
+      
+      let projectile = projectilePool.get();
+      projectile.x = x;
+      projectile.y = y;
+      projectile.vx = vx;
+      projectile.vy = vy;
+      projectile.isEnemyProjectile = false;
+      projectile.size = this.config.PROJECTILE_SIZE;
+      projectile.color = this.config.COLOR;
+      projectile.damage = this.config.DAMAGE;
+      projectile.remove = false;
+    }
+  }
+  
+  shootMachineGun(x, y, targetX, targetY) {
+    let dx = targetX - x;
+    let dy = targetY - y;
+    let mag = sqrt(dx * dx + dy * dy);
+    
+    if (mag > 0) {
+      // Adicionar pequeno spread aleatório
+      let baseAngle = atan2(dy, dx);
+      let spreadRad = radians(this.config.SPREAD_ANGLE);
+      let angle = baseAngle + random(-spreadRad/2, spreadRad/2);
+      
+      let vx = cos(angle) * this.config.PROJECTILE_SPEED;
+      let vy = sin(angle) * this.config.PROJECTILE_SPEED;
+      
+      let projectile = projectilePool.get();
+      projectile.x = x;
+      projectile.y = y;
+      projectile.vx = vx;
+      projectile.vy = vy;
+      projectile.isEnemyProjectile = false;
+      projectile.size = this.config.PROJECTILE_SIZE;
+      projectile.color = this.config.COLOR;
+      projectile.damage = this.config.DAMAGE;
+      projectile.remove = false;
+    }
+  }
+  
+  shootLaser(x, y, targetX, targetY) {
+    // Para o laser, vamos criar um efeito visual diferente
+    // Por enquanto, vamos fazer um projétil mais rápido e fino
+    let dx = targetX - x;
+    let dy = targetY - y;
+    let mag = sqrt(dx * dx + dy * dy);
+    
+    if (mag > 0) {
+      let vx = (dx / mag) * (this.config.PROJECTILE_SPEED || 12);
+      let vy = (dy / mag) * (this.config.PROJECTILE_SPEED || 12);
+      
+      let projectile = projectilePool.get();
+      projectile.x = x;
+      projectile.y = y;
+      projectile.vx = vx;
+      projectile.vy = vy;
+      projectile.isEnemyProjectile = false;
+      projectile.size = this.config.BEAM_WIDTH;
+      projectile.color = this.config.COLOR;
+      projectile.damage = this.config.DAMAGE;
+      projectile.remove = false;
+      projectile.isLaser = true; // Marcador especial para laser
+    }
+  }
+}
+
+// ===========================================
+// OBJECT POOLING SYSTEM - OTIMIZAÇÃO DE PERFORMANCE
+// ===========================================
+
+class ObjectPool {
+  constructor(createFn, resetFn, initialSize = 50) {
+    this.createFn = createFn;
+    this.resetFn = resetFn;
+    this.pool = [];
+    this.active = [];
+    
+    // Pre-populate pool
+    for (let i = 0; i < initialSize; i++) {
+      this.pool.push(this.createFn());
+    }
+  }
+  
+  get() {
+    let obj;
+    if (this.pool.length > 0) {
+      obj = this.pool.pop();
+    } else {
+      obj = this.createFn();
+    }
+    this.active.push(obj);
+    return obj;
+  }
+  
+  release(obj) {
+    const index = this.active.indexOf(obj);
+    if (index > -1) {
+      this.active.splice(index, 1);
+      this.resetFn(obj);
+      this.pool.push(obj);
+    }
+  }
+  
+  releaseAll() {
+    while (this.active.length > 0) {
+      this.release(this.active[0]);
+    }
+  }
+  
+  update() {
+    // Update all active objects and release those marked for removal
+    for (let i = this.active.length - 1; i >= 0; i--) {
+      const obj = this.active[i];
+      obj.update();
+      
+      if (obj.remove || (obj.life !== undefined && obj.life <= 0)) {
+        this.release(obj);
+      }
+    }
+  }
+  
+  draw() {
+    for (let obj of this.active) {
+      obj.draw();
+    }
+  }
+}
+
+// Pool creation functions
+function createProjectile() {
+  return new Projectile(0, 0, 0, 0, false);
+}
+
+function resetProjectile(projectile) {
+  projectile.x = 0;
+  projectile.y = 0;
+  projectile.vx = 0;
+  projectile.vy = 0;
+  projectile.remove = false;
+  projectile.isEnemyProjectile = false;
+  projectile.size = CONFIG.PROJECTILE.PLAYER.SIZE;
+  projectile.color = CONFIG.PROJECTILE.PLAYER.COLOR;
+  projectile.damage = 1;
+  projectile.isLaser = false;
+}
+
+function createParticle() {
+  return new Particle(0, 0, [255, 255, 255]);
+}
+
+function resetParticle(particle) {
+  particle.x = 0;
+  particle.y = 0;
+  particle.vx = 0;
+  particle.vy = 0;
+  particle.life = CONFIG.PARTICLE.LIFETIME;
+  particle.size = CONFIG.PARTICLE.MIN_SIZE;
+  particle.color = [255, 255, 255];
+  particle.remove = false;
+}
+
+// ===========================================
 // VARIÁVEIS GLOBAIS DO JOGO
 // ===========================================
 
@@ -12,12 +242,21 @@ let coins = [];
 let cameraSystem;
 let gameMap;
 
+// Object Pools
+let projectilePool;
+let particlePool;
+
 // Game state variables
 let score = 0;
 let highScore = 0;
 let level = 1;
 let canEnterPortal = false;
 let portal = { x: 1500, y: 1500, size: 80 };
+
+// Armas
+let availableWeapons = ['RIFLE', 'SHOTGUN', 'MACHINE_GUN', 'LASER'];
+let currentWeaponIndex = 0;
+let playerWeapon;
 
 // ===========================================
 // FUNÇÕES PRINCIPAIS DO P5.JS
@@ -32,6 +271,10 @@ function setup() {
   // Inicializar sistemas do jogo
   gameStateManager = new GameStateManager();
   initializeGame();
+  
+  // Inicializar pools
+  projectilePool = new ObjectPool(createProjectile, resetProjectile);
+  particlePool = new ObjectPool(createParticle, resetParticle);
 }
 
 function draw() {
@@ -41,6 +284,23 @@ function draw() {
 
 function keyPressed() {
   gameStateManager.handleKeyPressed();
+}
+
+// ===========================================
+// SISTEMA DE RESET DO JOGO
+// ===========================================
+
+function resetGame() {
+  // Limpar todos os pools
+  if (projectilePool) {
+    projectilePool.releaseAll();
+  }
+  if (particlePool) {
+    particlePool.releaseAll();
+  }
+  
+  // Reinicializar o jogo
+  initializeGame();
 }
 
 // ===========================================
@@ -54,6 +314,10 @@ function initializeGame() {
   // Inicializar sistemas
   cameraSystem = new Camera(player);
   gameMap = new GameMap();
+  
+  // Inicializar sistema de armas
+  currentWeaponIndex = 0;
+  playerWeapon = new Weapon(availableWeapons[currentWeaponIndex]);
   
   // Resetar arrays
   enemies = [];
@@ -131,17 +395,8 @@ function drawGame() {
     enemy.draw();
   }
   
-  for (let projectile of player.projectiles) {
-    projectile.draw();
-  }
-  
-  for (let projectile of enemyProjectiles) {
-    projectile.draw();
-  }
-  
-  for (let particle of particles) {
-    particle.draw();
-  }
+  projectilePool.draw();
+  particlePool.draw();
   
   for (let powerUp of powerUps) {
     powerUp.draw();
@@ -169,9 +424,24 @@ function updateGame() {
   // Update player
   player.update();
   
-  // Player shooting - mudança do mouse para tecla 'O'
-  if (keyIsDown(79)) { // Tecla 'O' (código 79)
-    player.shoot();
+  // Weapon switching - teclas 1, 2, 3, 4
+  if (keyIsDown(49)) { // Tecla '1'
+    switchWeapon(0);
+  } else if (keyIsDown(50)) { // Tecla '2'
+    switchWeapon(1);
+  } else if (keyIsDown(51)) { // Tecla '3'
+    switchWeapon(2);
+  } else if (keyIsDown(52)) { // Tecla '4'
+    switchWeapon(3);
+  }
+  
+  // Player shooting com novo sistema de armas
+  if (keyIsDown(79)) { // Tecla 'O'
+    // Encontrar inimigo mais próximo para mira automática
+    let closest = findClosestEnemy();
+    if (closest) {
+      playerWeapon.shoot(player.x, player.y, closest.x, closest.y);
+    }
   }
   
   // Update enemies
@@ -180,22 +450,13 @@ function updateGame() {
     if (enemy.shoot) enemy.shoot();
   }
   
-  // Update projectiles
-  for (let projectile of enemyProjectiles) {
-    projectile.update();
-  }
-  
-  // Update particles
-  for (let particle of particles) {
-    particle.update();
-  }
+  projectilePool.update();
+  particlePool.update();
   
   // Check collisions
   checkCollisions();
   
   // Clean up arrays
-  enemyProjectiles = enemyProjectiles.filter(p => !p.remove);
-  particles = particles.filter(p => !p.remove);
   powerUps = powerUps.filter(p => !p.remove);
   coins = coins.filter(c => !c.remove);
   
@@ -222,18 +483,26 @@ function updateGame() {
 
 function checkCollisions() {
   // Player projectiles vs enemies
-  for (let i = player.projectiles.length - 1; i >= 0; i--) {
-    let projectile = player.projectiles[i];
+  for (let i = projectilePool.active.length - 1; i >= 0; i--) {
+    let projectile = projectilePool.active[i];
+    if (projectile.isEnemyProjectile) continue;
     for (let j = enemies.length - 1; j >= 0; j--) {
       let enemy = enemies[j];
       if (dist(projectile.x, projectile.y, enemy.x, enemy.y) < (projectile.size + enemy.size) / 2) {
         // Hit enemy
         enemy.health--;
-        projectile.remove = true;
+        projectilePool.release(projectile);
         
         // Create particles
         for (let k = 0; k < 5; k++) {
-          particles.push(new Particle(enemy.x, enemy.y, [255, 100, 100]));
+          let particle = particlePool.get();
+          particle.x = enemy.x;
+          particle.y = enemy.y;
+          particle.vx = random(-2, 2);
+          particle.vy = random(-2, 2);
+          particle.life = CONFIG.PARTICLE.LIFETIME;
+          particle.size = CONFIG.PARTICLE.MIN_SIZE;
+          particle.color = [255, 100, 100];
         }
         
         if (enemy.health <= 0) {
@@ -256,15 +525,23 @@ function checkCollisions() {
   }
   
   // Enemy projectiles vs player
-  for (let i = enemyProjectiles.length - 1; i >= 0; i--) {
-    let projectile = enemyProjectiles[i];
+  for (let i = projectilePool.active.length - 1; i >= 0; i--) {
+    let projectile = projectilePool.active[i];
+    if (!projectile.isEnemyProjectile) continue;
     if (dist(projectile.x, projectile.y, player.x, player.y) < (projectile.size + player.size) / 2) {
       player.health--;
-      enemyProjectiles.splice(i, 1);
+      projectilePool.release(projectile);
       
       // Create particles
       for (let k = 0; k < 3; k++) {
-        particles.push(new Particle(player.x, player.y, [255, 0, 0]));
+        let particle = particlePool.get();
+        particle.x = player.x;
+        particle.y = player.y;
+        particle.vx = random(-2, 2);
+        particle.vy = random(-2, 2);
+        particle.life = CONFIG.PARTICLE.LIFETIME;
+        particle.size = CONFIG.PARTICLE.MIN_SIZE;
+        particle.color = [255, 0, 0];
       }
       
       // Verificação imediata de game over
@@ -409,4 +686,63 @@ function drawMinimap() {
     let portalMapY = map(portal.y, 0, CONFIG.MAP.HEIGHT, mapY, mapY + mapSize);
     ellipse(portalMapX, portalMapY, 6);
   }
+}
+
+// ===========================================
+// SISTEMA DE ARMAS - FUNÇÕES AUXILIARES
+// ===========================================
+
+// Função auxiliar para trocar armas
+function switchWeapon(weaponIndex) {
+  // Verificar se o sistema de armas está inicializado
+  if (!availableWeapons || !playerWeapon) {
+    console.log("Sistema de armas não inicializado ainda");
+    return;
+  }
+  
+  if (weaponIndex >= 0 && weaponIndex < availableWeapons.length && weaponIndex !== currentWeaponIndex) {
+    let oldWeapon = availableWeapons[currentWeaponIndex];
+    currentWeaponIndex = weaponIndex;
+    playerWeapon = new Weapon(availableWeapons[currentWeaponIndex]);
+    
+    // Debug e feedback visual
+    console.log(`Arma trocada de ${oldWeapon} para ${availableWeapons[currentWeaponIndex]}`);
+    
+    // Criar partícula visual para feedback da troca
+    if (particlePool && player) {
+      for (let i = 0; i < 3; i++) {
+        let particle = particlePool.get();
+        particle.x = player.x + random(-20, 20);
+        particle.y = player.y + random(-20, 20);
+        particle.vx = random(-1, 1);
+        particle.vy = random(-1, 1);
+        particle.life = 30;
+        particle.size = 5;
+        particle.color = CONFIG.WEAPONS[availableWeapons[currentWeaponIndex]].COLOR;
+        particle.remove = false;
+      }
+    }
+  } else if (weaponIndex === currentWeaponIndex) {
+    console.log(`Arma ${availableWeapons[currentWeaponIndex]} já está selecionada`);
+  }
+}
+
+// Função auxiliar para encontrar inimigo mais próximo
+function findClosestEnemy() {
+  if (!enemies || enemies.length === 0) return null;
+  
+  let closest = null;
+  let minDist = Infinity;
+  
+  for (let enemy of enemies) {
+    if (!enemy || typeof enemy.x !== 'number' || typeof enemy.y !== 'number') continue;
+    
+    let d = dist(player.x, player.y, enemy.x, enemy.y);
+    if (d < minDist) {
+      minDist = d;
+      closest = enemy;
+    }
+  }
+  
+  return closest;
 }
