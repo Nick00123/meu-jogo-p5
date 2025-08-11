@@ -1,297 +1,412 @@
-let player, enemies, particles, gameMap, cameraSystem;
-let currentLevel = 1;
-let portal = { x: 700, y: 500, size: 40 };
-let score = 0;
-let highscore = 0;
+// ===========================================
+// VARIÁVEIS GLOBAIS DO JOGO
+// ===========================================
+
+let gameStateManager;
+let player;
+let enemies = [];
 let enemyProjectiles = [];
+let particles = [];
 let powerUps = [];
 let coins = [];
-let gameOver = false;
-let canEnterPortal = true;
-let transitioning = false;
-let lastDamageTime = 0; // Adicione no topo do arquivo
+let cameraSystem;
+let gameMap;
+
+// Game state variables
+let score = 0;
+let highScore = 0;
+let level = 1;
+let canEnterPortal = false;
+let portal = { x: 1500, y: 1500, size: 80 };
+
+// ===========================================
+// FUNÇÕES PRINCIPAIS DO P5.JS
+// ===========================================
 
 function setup() {
-  let canvas = createCanvas(800, 600);
-  canvas.parent("game-container");
-
-  gameMap = new GameMap();
-  player = new Player(400, 300);
-  particles = [];
-  cameraSystem = new Camera(player, gameMap.width, gameMap.height);
-
-  // Carrega highscore salvo
-  highscore = Number(localStorage.highscore || 0);
-
-  startLevel(1);
+  createCanvas(CONFIG.CANVAS.WIDTH, CONFIG.CANVAS.HEIGHT);
+  
+  // Carregar high score do localStorage
+  highScore = localStorage.getItem('highScore') || 0;
+  
+  // Inicializar sistemas do jogo
+  gameStateManager = new GameStateManager();
+  initializeGame();
 }
 
-function startLevel(level) {
-  currentLevel = level;
-  player.x = gameMap.width / 2;
-  player.y = gameMap.height / 2;
-  player.health = 5;
-  player.projectiles = [];
+function draw() {
+  gameStateManager.update();
+  gameStateManager.draw();
+}
+
+function keyPressed() {
+  gameStateManager.handleKeyPressed();
+}
+
+// ===========================================
+// INICIALIZAÇÃO DO JOGO
+// ===========================================
+
+function initializeGame() {
+  // Inicializar player
+  player = new Player(CONFIG.MAP.WIDTH / 2, CONFIG.MAP.HEIGHT / 2);
+  
+  // Inicializar sistemas
+  cameraSystem = new Camera(player);
+  gameMap = new GameMap();
+  
+  // Resetar arrays
+  enemies = [];
   enemyProjectiles = [];
   particles = [];
   powerUps = [];
   coins = [];
+  
+  // Resetar variáveis do jogo
+  score = 0;
+  level = 1;
   canEnterPortal = false;
-  transitioning = false;
+  
+  // Spawnar inimigos iniciais
+  spawnEnemies();
+}
 
-  // Portal em local distante do player
-  let minPortalDist = 200;
-  let portalPos;
-  do {
-    let angle = random(TWO_PI);
-    let distance = min(gameMap.width, gameMap.height) / 2 - 100;
-    portalPos = {
-      x: player.x + cos(angle) * distance,
-      y: player.y + sin(angle) * distance,
-      size: 40
-    };
-  } while (dist(player.x, player.y, portalPos.x, portalPos.y) < minPortalDist);
-  portal = portalPos;
+// ===========================================
+// SISTEMA DE SPAWN DE INIMIGOS
+// ===========================================
 
-  // Sempre inicialize o array de inimigos
-  enemies = [];
-  enemies.push(new Enemy(100, 100));
-  enemies.push(new FastEnemy(300, 400));
-
-  if (level > 1) {
-    // Chefão a cada 5 fases
-    if (level % 5 === 0) {
-      enemies.push(new BossEnemy(random(100, gameMap.width - 100), random(100, gameMap.height - 100)));
+function spawnEnemies() {
+  // Usar valores padrão já que CONFIG.LEVEL não existe
+  let baseEnemies = 3;
+  let enemiesPerLevel = 2;
+  let enemyCount = baseEnemies + (level - 1) * enemiesPerLevel;
+  
+  for (let i = 0; i < enemyCount; i++) {
+    let x, y;
+    do {
+      x = random(50, CONFIG.MAP.WIDTH - 50);
+      y = random(50, CONFIG.MAP.HEIGHT - 50);
+    } while (dist(x, y, player.x, player.y) < 200);
+    
+    // Determinar tipo de inimigo baseado no nível
+    let enemyType = random();
+    if (level >= 3 && enemyType < 0.1) {
+      enemies.push(new BossEnemy(x, y));
+    } else if (level >= 2 && enemyType < 0.3) {
+      enemies.push(new FastEnemy(x, y));
+    } else {
+      enemies.push(new Enemy(x, y));
     }
-    // Inimigos normais e rápidos
-    for (let i = 0; i < level + 1; i++) {
-      let pos = randomPositionAwayFromPlayer();
-      if (random() < 0.3) {
-        enemies.push(new FastEnemy(pos.x, pos.y));
-      } else {
-        enemies.push(new Enemy(pos.x, pos.y));
+  }
+}
+
+// ===========================================
+// FUNÇÃO DE DESENHO DO JOGO
+// ===========================================
+
+function drawGame() {
+  // Apply camera transformation
+  cameraSystem.apply();
+
+  // Draw map
+  gameMap.draw();
+
+  // Draw portal
+  if (canEnterPortal && enemies.length === 0) {
+    push();
+    fill(255, 255, 0, 150 + sin(millis() * 0.01) * 50);
+    noStroke();
+    ellipse(portal.x, portal.y, portal.size);
+    fill(255, 255, 0);
+    textAlign(CENTER, CENTER);
+    textSize(12);
+    text('PORTAL', portal.x, portal.y);
+    pop();
+  }
+
+  // Draw game objects
+  player.draw();
+  
+  for (let enemy of enemies) {
+    enemy.draw();
+  }
+  
+  for (let projectile of player.projectiles) {
+    projectile.draw();
+  }
+  
+  for (let projectile of enemyProjectiles) {
+    projectile.draw();
+  }
+  
+  for (let particle of particles) {
+    particle.draw();
+  }
+  
+  for (let powerUp of powerUps) {
+    powerUp.draw();
+  }
+  
+  for (let coin of coins) {
+    coin.draw();
+  }
+
+  cameraSystem.reset(); // Reset camera transformation
+
+  // Draw HUD (not affected by camera)
+  drawHUD();
+  drawMinimap();
+}
+
+// ===========================================
+// ATUALIZAÇÃO DO JOGO
+// ===========================================
+
+function updateGame() {
+  // Update camera
+  cameraSystem.update();
+  
+  // Update player
+  player.update();
+  
+  // Player shooting - mudança do mouse para tecla 'O'
+  if (keyIsDown(79)) { // Tecla 'O' (código 79)
+    player.shoot();
+  }
+  
+  // Update enemies
+  for (let enemy of enemies) {
+    enemy.update(player);
+    if (enemy.shoot) enemy.shoot();
+  }
+  
+  // Update projectiles
+  for (let projectile of enemyProjectiles) {
+    projectile.update();
+  }
+  
+  // Update particles
+  for (let particle of particles) {
+    particle.update();
+  }
+  
+  // Check collisions
+  checkCollisions();
+  
+  // Clean up arrays
+  enemyProjectiles = enemyProjectiles.filter(p => !p.remove);
+  particles = particles.filter(p => !p.remove);
+  powerUps = powerUps.filter(p => !p.remove);
+  coins = coins.filter(c => !c.remove);
+  
+  // Check game over PRIMEIRO - antes de outras verificações
+  if (player.health <= 0) {
+    gameStateManager.changeState('GAME_OVER');
+    return; // Sair imediatamente para evitar processamento adicional
+  }
+  
+  // Check level completion
+  if (enemies.length === 0 && !canEnterPortal) {
+    canEnterPortal = true;
+  }
+  
+  // Check portal entry
+  if (canEnterPortal && dist(player.x, player.y, portal.x, portal.y) < portal.size / 2) {
+    nextLevel();
+  }
+}
+
+// ===========================================
+// SISTEMA DE COLISÕES
+// ===========================================
+
+function checkCollisions() {
+  // Player projectiles vs enemies
+  for (let i = player.projectiles.length - 1; i >= 0; i--) {
+    let projectile = player.projectiles[i];
+    for (let j = enemies.length - 1; j >= 0; j--) {
+      let enemy = enemies[j];
+      if (dist(projectile.x, projectile.y, enemy.x, enemy.y) < (projectile.size + enemy.size) / 2) {
+        // Hit enemy
+        enemy.health--;
+        projectile.remove = true;
+        
+        // Create particles
+        for (let k = 0; k < 5; k++) {
+          particles.push(new Particle(enemy.x, enemy.y, [255, 100, 100]));
+        }
+        
+        if (enemy.health <= 0) {
+          // Enemy destroyed - usar valores padrão para pontuação
+          score += 10; // Valor padrão para kill
+          enemies.splice(j, 1);
+          
+          // Chance to drop power-up or coin - usar valores padrão
+          if (random() < 0.15) { // 15% chance para power-up
+            let type = random(['health', 'speed']);
+            powerUps.push(new PowerUp(enemy.x, enemy.y, type));
+          }
+          if (random() < 0.25) { // 25% chance para coin
+            coins.push(new Coin(enemy.x, enemy.y));
+          }
+        }
+        break;
       }
     }
   }
-
-  // Power-ups e moedas aleatórios (em todas as fases)
-  if (random() < 0.5) powerUps.push(new PowerUp(random(100, gameMap.width - 100), random(100, gameMap.height - 100), 'life'));
-  if (random() < 0.5) powerUps.push(new PowerUp(random(100, gameMap.width - 100), random(100, gameMap.height - 100), 'speed'));
-  for (let i = 0; i < 3; i++) {
-    coins.push(new Coin(random(100, gameMap.width - 100), random(100, gameMap.height - 100)));
-  }
-
-  setTimeout(() => { canEnterPortal = true; }, 1000);
-}
-
-function draw() {
-  if (gameOver) {
-    background(0, 150);
-    fill(255, 0, 0);
-    textSize(48);
-    textAlign(CENTER, CENTER);
-    text("GAME OVER", width / 2, height / 2);
-    textSize(24);
-    fill(255);
-    text("Pontuação: " + score, width / 2, height / 2 + 50);
-    text("Recorde: " + highscore, width / 2, height / 2 + 90);
-    text("Pressione R para reiniciar", width / 2, height / 2 + 130);
-    return;
-  }
-
-  cameraSystem.begin();
-  gameMap.draw();
-
-  // Power-ups
-  for (let pu of powerUps) pu.draw();
-
-  // Moedas
-  for (let c of coins) c.draw();
-
-  player.update();
-  player.draw();
-
-  // Desenhar portal
-  push();
-  stroke(255, 255, 0);
-  strokeWeight(4);
-  fill(120, 0, 255, 220);
-  ellipse(portal.x, portal.y, portal.size + 10, portal.size + 10);
-  fill(200, 200, 255, 180);
-  ellipse(portal.x, portal.y, portal.size, portal.size);
-  pop();
-
-  // INIMIGOS DEVEM SER DESENHADOS AQUI, DENTRO DO BLOCO DA CÂMERA
-  for (let e of enemies) {
-    e.update(player);
-    e.draw();
-    // Dano ao player se encostar no inimigo
-    if (
-      dist(player.x, player.y, e.x, e.y) < (player.size / 2 + e.size / 2) &&
-      millis() - lastDamageTime > 1000 // 1 segundo de invencibilidade
-    ) {
+  
+  // Enemy projectiles vs player
+  for (let i = enemyProjectiles.length - 1; i >= 0; i--) {
+    let projectile = enemyProjectiles[i];
+    if (dist(projectile.x, projectile.y, player.x, player.y) < (projectile.size + player.size) / 2) {
       player.health--;
-      lastDamageTime = millis();
+      enemyProjectiles.splice(i, 1);
+      
+      // Create particles
+      for (let k = 0; k < 3; k++) {
+        particles.push(new Particle(player.x, player.y, [255, 0, 0]));
+      }
+      
+      // Verificação imediata de game over
+      if (player.health <= 0) {
+        return; // Sair imediatamente para evitar mais colisões
+      }
     }
   }
-
-  cameraSystem.end();
-
-  // HUD e minimapa sempre visíveis
-  drawHUD();
-  drawMinimap();
-
-  // Checar se player entrou no portal (com proteção extra)
-  if (
-    !transitioning &&
-    canEnterPortal &&
-    dist(player.x, player.y, portal.x, portal.y) < (player.size / 2 + portal.size / 2)
-  ) {
-    transitioning = true;
-    setTimeout(() => {
-      startLevel(currentLevel + 1);
-      transitioning = false;
-    }, 300);
-  }
-
-  // Power-up coleta
+  
+  // Player vs power-ups
   for (let i = powerUps.length - 1; i >= 0; i--) {
-    let pu = powerUps[i];
-    if (dist(player.x, player.y, pu.x, pu.y) < (player.size / 2 + pu.size / 2)) {
-      if (pu.type === 'life') player.health = min(player.health + 2, 5);
-      if (pu.type === 'speed') player.speed += 1;
+    let powerUp = powerUps[i];
+    if (dist(player.x, player.y, powerUp.x, powerUp.y) < (player.size + powerUp.size) / 2) {
+      if (powerUp.type === 'health') {
+        player.health = min(player.health + 1, CONFIG.PLAYER.MAX_HEALTH);
+      } else if (powerUp.type === 'speed') {
+        player.speed = min(player.speed + 0.5, CONFIG.PLAYER.SPEED * 2);
+      }
       powerUps.splice(i, 1);
     }
   }
-
-  // Moeda coleta
+  
+  // Player vs coins
   for (let i = coins.length - 1; i >= 0; i--) {
-    let c = coins[i];
-    if (dist(player.x, player.y, c.x, c.y) < (player.size / 2 + c.size / 2)) {
-      score += 5;
+    let coin = coins[i];
+    if (dist(player.x, player.y, coin.x, coin.y) < (player.size + coin.size) / 2) {
+      score += 5; // Valor padrão para coin
       coins.splice(i, 1);
     }
   }
-
-  // Projéteis dos inimigos (boss)
-  for (let ep of enemyProjectiles) {
-    ep.update();
-    ep.draw();
-    if (dist(ep.x, ep.y, player.x, player.y) < (player.size / 2 + ep.size / 2)) {
-      player.health--;
-      ep.remove = true;
-    }
-  }
-  enemyProjectiles = enemyProjectiles.filter(ep => !ep.remove);
-
-  // Partículas
-  for (let i = particles.length - 1; i >= 0; i--) {
-    particles[i].update();
-    particles[i].draw();
-    if (particles[i].life <= 0) {
-      particles.splice(i, 1);
-    }
-  }
-  particles = particles.filter(p => p.life > 0);
-
-  // HUD
-  drawHUD();
-  drawMinimap();
-
-  // Checa game over
-  if (player.health <= 0) {
-    // Salva recorde
-    if (score > highscore) {
-      highscore = score;
-      localStorage.highscore = highscore;
-    }
-    gameOver = true;
-  }
-
-  // Verifica colisão dos projéteis do player com os inimigos
-  for (let i = enemies.length - 1; i >= 0; i--) {
-    let enemy = enemies[i];
-    for (let j = player.projectiles.length - 1; j >= 0; j--) {
-      let proj = player.projectiles[j];
-      if (dist(enemy.x, enemy.y, proj.x, proj.y) < (enemy.size / 2 + proj.size / 2)) {
-        enemy.health--;
-        proj.remove = true;
-        // Efeito de partícula opcional:
-        for (let k = 0; k < 8; k++) particles.push(new Particle(enemy.x, enemy.y));
-        if (enemy.health <= 0) {
-          enemies.splice(i, 1);
-          score += 10;
-          break; // Sai do loop de projéteis, pois o inimigo foi removido
+  
+  // Player vs enemies - adicionar proteção contra múltiplas colisões
+  for (let enemy of enemies) {
+    if (dist(player.x, player.y, enemy.x, enemy.y) < (player.size + enemy.size) / 2) {
+      // Verificar se já não perdeu vida recentemente (proteção contra spam)
+      if (!player.invulnerable) {
+        player.health--;
+        player.invulnerable = true;
+        
+        // Remover invulnerabilidade após um tempo
+        setTimeout(() => {
+          if (player) player.invulnerable = false;
+        }, 500); // 500ms de invulnerabilidade
+        
+        // Push player away
+        let angle = atan2(player.y - enemy.y, player.x - enemy.x);
+        player.x += cos(angle) * 20; // Empurrar mais longe
+        player.y += sin(angle) * 20;
+        
+        // Verificação imediata de game over
+        if (player.health <= 0) {
+          return; // Sair imediatamente
         }
       }
     }
   }
 }
 
-function drawHUD() {
-  let maxHealth = 5;
-  let barWidth = 150;
-  let healthRatio = player.health / maxHealth;
-  fill(100);
-  rect(10, 10, barWidth, 20, 5);
-  fill(0, 200, 0);
-  rect(10, 10, barWidth * healthRatio, 20, 5);
+// ===========================================
+// SISTEMA DE NÍVEIS
+// ===========================================
 
-  fill(255);
-  textSize(16);
+function nextLevel() {
+  level++;
+  canEnterPortal = false;
+  
+  // Reset player position
+  player.x = CONFIG.MAP.WIDTH / 2;
+  player.y = CONFIG.MAP.HEIGHT / 2;
+  
+  // Spawn new enemies
+  spawnEnemies();
+  
+  // Update high score
+  if (score > highScore) {
+    highScore = score;
+    localStorage.setItem('highScore', highScore);
+  }
+}
+
+// ===========================================
+// INTERFACE DO USUÁRIO
+// ===========================================
+
+function drawHUD() {
+  // Background for HUD
+  fill(0, 0, 0, 150);
+  noStroke();
+  rect(0, 0, width, 80);
+  
+  // Health
+  fill(255, 0, 0);
   textAlign(LEFT, TOP);
-  text("Vida: " + player.health, 10, 35);
-  text("Inimigos: " + enemies.length, 10, 55);
-  text("Fase: " + currentLevel, 10, 75);
-  text("Pontuação: " + score, 10, 95);
-  text("Recorde: " + highscore, 10, 115);
+  textSize(16);
+  text(`Vida: ${player.health}`, 10, 10);
+  
+  // Score
+  fill(255, 255, 0);
+  text(`Score: ${score}`, 10, 30);
+  
+  // High Score
+  fill(0, 255, 0);
+  text(`High Score: ${highScore}`, 10, 50);
+  
+  // Level
+  fill(255, 255, 255);
+  text(`Nível: ${level}`, 200, 10);
+  
+  // Enemies remaining
+  text(`Inimigos: ${enemies.length}`, 200, 30);
 }
 
 function drawMinimap() {
-  let scale = 0.08; // Menor escala
-  let mapW = gameMap.width * scale;
-  let mapH = gameMap.height * scale;
-  let margin = 20;
-  push();
-  // Centralizado no canto superior direito
-  translate(width - mapW - margin, margin);
-  fill(50, 100);
-  rect(0, 0, mapW, mapH, 5);
-  // Player
-  fill(0,200,255);
-  ellipse(player.x * scale, player.y * scale, player.size * scale);
-  // Inimigos
-  fill(255,0,0);
-  for (let e of enemies) ellipse(e.x * scale, e.y * scale, e.size * scale);
+  let mapSize = 120;
+  let mapX = width - mapSize - 10;
+  let mapY = 10;
+  
+  // Minimap background
+  fill(0, 0, 0, 150);
+  stroke(255);
+  rect(mapX, mapY, mapSize, mapSize);
+  
+  // Player position
+  let playerMapX = map(player.x, 0, CONFIG.MAP.WIDTH, mapX, mapX + mapSize);
+  let playerMapY = map(player.y, 0, CONFIG.MAP.HEIGHT, mapY, mapY + mapSize);
+  fill(0, 200, 255);
+  noStroke();
+  ellipse(playerMapX, playerMapY, 4);
+  
+  // Enemies
+  fill(255, 0, 0);
+  for (let enemy of enemies) {
+    let enemyMapX = map(enemy.x, 0, CONFIG.MAP.WIDTH, mapX, mapX + mapSize);
+    let enemyMapY = map(enemy.y, 0, CONFIG.MAP.HEIGHT, mapY, mapY + mapSize);
+    ellipse(enemyMapX, enemyMapY, 2);
+  }
+  
   // Portal
-  fill(120,0,255);
-  ellipse(portal.x * scale, portal.y * scale, portal.size * scale);
-  // PowerUps
-  fill(0,255,0);
-  for (let pu of powerUps) ellipse(pu.x * scale, pu.y * scale, pu.size * scale);
-  // Moedas
-  fill(255,215,0);
-  for (let c of coins) ellipse(c.x * scale, c.y * scale, c.size * scale);
-  pop();
-}
-
-function keyPressed() {
-  if (key === 'p' || key === 'P') {
-    player.shoot();
+  if (canEnterPortal) {
+    fill(255, 255, 0);
+    let portalMapX = map(portal.x, 0, CONFIG.MAP.WIDTH, mapX, mapX + mapSize);
+    let portalMapY = map(portal.y, 0, CONFIG.MAP.HEIGHT, mapY, mapY + mapSize);
+    ellipse(portalMapX, portalMapY, 6);
   }
-  if (gameOver && (key === 'r' || key === 'R')) {
-    score = 0;
-    gameOver = false;
-    canEnterPortal = false; // <-- Reinicia proteção do portal
-    startLevel(1);
-  }
-}
-
-function randomPositionAwayFromPlayer(minDist = 120) {
-  let x, y;
-  do {
-    x = random(100, gameMap.width - 100);
-    y = random(100, gameMap.height - 100);
-  } while (dist(x, y, player.x, player.y) < minDist);
-  return { x, y };
 }

@@ -1,30 +1,42 @@
 class Camera {
-  constructor(target, mapWidth = 1600, mapHeight = 1200) {
+  constructor(target, mapWidth = CONFIG.MAP.WIDTH, mapHeight = CONFIG.MAP.HEIGHT) {
     this.target = target;
     this.mapWidth = mapWidth;
     this.mapHeight = mapHeight;
     this.x = target.x;
     this.y = target.y;
-    this.smoothness = 0.1; // Quanto menor, mais suave
+    this.smoothness = CONFIG.CAMERA.SMOOTHNESS;
   }
 
-  begin() {
+  update() {
     // Suavização
     this.x += (this.target.x - this.x) * this.smoothness;
     this.y += (this.target.y - this.y) * this.smoothness;
 
     // Limitar aos limites do mapa
-    let halfW = width / 2;
-    let halfH = height / 2;
+    let halfW = CONFIG.CANVAS.WIDTH / 2;
+    let halfH = CONFIG.CANVAS.HEIGHT / 2;
     this.x = constrain(this.x, halfW, this.mapWidth - halfW);
     this.y = constrain(this.y, halfH, this.mapHeight - halfH);
+  }
 
+  apply() {
+    let halfW = CONFIG.CANVAS.WIDTH / 2;
+    let halfH = CONFIG.CANVAS.HEIGHT / 2;
     translate(halfW - this.x, halfH - this.y);
   }
 
-  end() {
+  reset() {
     resetMatrix();
   }
-}
 
-cameraSystem = new Camera(player, gameMap.width, gameMap.height);
+  // Keep old methods for backward compatibility
+  begin() {
+    this.update();
+    this.apply();
+  }
+
+  end() {
+    this.reset();
+  }
+}

@@ -2,10 +2,10 @@ class Particle {
   constructor(x, y) {
     this.x = x;
     this.y = y;
-    this.size = random(2, 5);
-    this.vx = random(-2, 2);
-    this.vy = random(-2, 2);
-    this.life = 60;
+    this.size = random(CONFIG.PARTICLE.MIN_SIZE, CONFIG.PARTICLE.MAX_SIZE);
+    this.vx = random(CONFIG.PARTICLE.MIN_VELOCITY, CONFIG.PARTICLE.MAX_VELOCITY);
+    this.vy = random(CONFIG.PARTICLE.MIN_VELOCITY, CONFIG.PARTICLE.MAX_VELOCITY);
+    this.life = CONFIG.PARTICLE.LIFETIME;
   }
 
   update() {
@@ -16,7 +16,7 @@ class Particle {
 
   draw() {
     noStroke();
-    fill(255, 150, 0, map(this.life, 0, 60, 0, 255));
+    fill(...CONFIG.PARTICLE.COLOR, map(this.life, 0, CONFIG.PARTICLE.LIFETIME, 0, 255));
     ellipse(this.x, this.y, this.size);
   }
 }

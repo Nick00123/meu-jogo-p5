@@ -1,16 +1,16 @@
 class GameMap {
   constructor() {
-    this.width = 2000;
-    this.height = 2000;
+    this.width = CONFIG.MAP.WIDTH;
+    this.height = CONFIG.MAP.HEIGHT;
   }
 
   draw() {
-    background(30, 120, 30);
-    stroke(50);
-    for (let x = 0; x < this.width; x += 50) {
+    background(...CONFIG.MAP.BACKGROUND_COLOR);
+    stroke(...CONFIG.MAP.GRID_COLOR);
+    for (let x = 0; x < this.width; x += CONFIG.MAP.GRID_SIZE) {
       line(x, 0, x, this.height);
     }
-    for (let y = 0; y < this.height; y += 50) {
+    for (let y = 0; y < this.height; y += CONFIG.MAP.GRID_SIZE) {
       line(0, y, this.width, y);
     }
   }
