@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo Boss Battles - Space Shooter</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <style>
+        body {
+            background: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .demo-info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+            text-align: left;
+            max-width: 300px;
+        }
+        
+        .boss-info {
+            color: #ff0;
+            margin: 5px 0;
+        }
+        
+        .attack-info {
+            color: #f00;
+            margin: 3px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="demo-info">
+        <h3>🎯 Demo Boss Battles</h3>
+        <div class="boss-info">
+            <strong>Nível de Boss:</strong> <span id="boss-level">5</span>
+        </div>
+        <div class="boss-info">
+            <strong>Fase Atual:</strong> <span id="boss-phase">1</span>
+        </div>
+        <div class="boss-info">
+            <strong>Vida:</strong> <span id="boss-health">100%</span>
+        </div>
+        <div class="attack-info">
+            <strong>Ataques:</strong>
+            <ul>
+                <li>Círculo de Projéteis</li>
+                <li>Rajada Direta</li>
+                <li>Onda de Choque</li>
+                <li>Chuva de Projéteis</li>
+                <li>Laser Giratório</li>
+                <li>Meteoro</li>
+            </ul>
+        </div>
+        <div class="attack-info">
+            <strong>Controles:</strong>
+            <ul>
+                <li>WASD - Movimento</li>
+                <li>Mouse - Mirar</li>
+                <li>Click - Atirar</li>
+                <li>Shift - Dash</li>
+                <li>1-4 - Trocar arma</li>
+                <li>ESC - Loja</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Configurações primeiro -->
+    <script src="config.js"></script>
+    
+    <!-- Sistemas base -->
+    <script src="objectPool.js"></script>
+    <script src="weapons.js"></script>
+    <script src="upgrades.js"></script>
+    <script src="collisions.js"></script>
+    
+    <!-- Classes de objetos do jogo -->
+    <script src="enemy.js"></script>
+    <script src="boss.js"></script>
+    <script src="player.js"></script>
+    <script src="projectile.js"></script>
+    <script src="particle.js"></script>
+    <script src="map.js"></script>
+    <script src="camera.js"></script>
+    
+    <!-- Gerenciamento de estados -->
+    <script src="gameStateManager.js"></script>
+    
+    <!-- Arquivo principal por último -->
+    <script src="sketch.js"></script>
+    
+    <script>
+        // Função para testar boss battles
+        function testBossBattle() {
+            // Forçar nível 5 para testar boss
+            level = 5;
+            spawnBossLevel();
+            
+            // Adicionar informações de debug
+            console.log("🎯 Boss Battle Test Iniciado!");
+            console.log("Nível:", level);
+            console.log("Boss criado com sucesso!");
+        }
+        
+        // Adicionar botão de teste
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                testBossBattle();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

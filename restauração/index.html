@@ -15,14 +15,36 @@
   <body>
     <div id="game-container"></div>
 
-    <script src="config.js"></script>
-    <script src="gameStateManager.js"></script>
-    <script src="enemy.js"></script>
-    <script src="player.js"></script>
-    <script src="projectile.js"></script>
-    <script src="particle.js"></script>
-    <script src="map.js"></script>
-    <script src="camera.js"></script>
-    <script src="sketch.js"></script>
+    <!-- Config -->
+    <script src="src/config/config.js"></script>
+    
+    <!-- Core -->
+    <script src="src/core/objectPool.js"></script>
+
+    <!-- Systems -->
+    <script src="src/systems/weapons.js"></script>
+    <script src="src/systems/upgrades.js"></script>
+    <script src="src/systems/collisions.js"></script>
+    <script src="src/systems/adaptiveDifficulty.js"></script>
+    <script src="src/systems/weaponProgression.js"></script>
+    <script src="src/systems/gameIntegration.js"></script>
+    <script src="src/systems/environmentalIntegration.js"></script>
+    <script src="src/systems/environmentalSetup.js"></script>
+
+    <!-- Entidades -->
+    <script src="src/entities/enemy.js"></script>
+    <script src="src/entities/enhancedEnemies.js"></script>
+    <script src="src/entities/boss.js"></script>
+    <script src="src/entities/player.js"></script>
+    <script src="src/entities/projectile.js"></script>
+    <script src="src/entities/particle.js"></script>
+    <script src="src/entities/map.js"></script>
+    <script src="src/entities/camera.js"></script>
+    
+    <!-- Estado -->
+    <script src="src/state/gameStateManager.js"></script>
+    
+    <!-- Principal -->
+    <script src="src/main/sketch.js"></script>
   </body>
 </html>
