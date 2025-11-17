@@ -1,0 +1,11 @@
+{
+  "SOLDADO": {
+    "nome": "Soldado", "cor": [0, 200, 255], "vidaMaxima": 5, "velocidade": 3
+  },
+  "EXPLORADOR": {
+    "nome": "Explorador", "cor": [0, 255, 180], "vidaMaxima": 4, "velocidade": 3.6
+  },
+  "TANQUE": {
+    "nome": "Tanque", "cor": [0, 120, 255], "vidaMaxima": 7, "velocidade": 2.6
+  }
+}
