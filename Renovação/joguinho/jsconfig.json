@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "es6"
+  },
+  "include": [
+    "*.js",
+    "nucleo/**/*.js",
+    "estados/**/*.js",
+    "entidades/**/*.js",
+    "sistemas/**/*.js",
+    "ui/**/*.js",
+    "util/**/*.js",
+    "dinamica/**/*.js",
+    "assets/dados/**/*.json"
+  ]
+}

@@ -1,0 +1,112 @@
+{
+  "NORMAL": {
+    "vida": 50,
+    "tamanho": 30,
+    "velocidade": 2,
+    "dano": 15,
+    "cor": [255, 0, 0],
+    "comportamento": "PERSEGUIR"
+  },
+  "FAST": {
+    "vida": 30,
+    "tamanho": 20,
+    "velocidade": 4,
+    "dano": 12,
+    "cor": [255, 255, 0],
+    "comportamento": "PERSEGUIR"
+  },
+  "TANQUE": {
+    "vida": 120,
+    "tamanho": 50,
+    "velocidade": 1,
+    "dano": 25,
+    "cor": [100, 100, 100],
+    "comportamento": "PERSEGUIR",
+    "reducaoDano": 0.5
+  },
+  "SNIPER": {
+    "vida": 40,
+    "tamanho": 35,
+    "velocidade": 1.5,
+    "dano": 30,
+    "cor": [0, 255, 0],
+    "comportamento": "SNIPER",
+    "alcanceAtaque": 300,
+    "tempoRecargaTiro": 90
+  },
+  "SWARM": {
+    "vida": 20,
+    "tamanho": 15,
+    "velocidade": 3.5,
+    "dano": 8,
+    "cor": [255, 0, 255],
+    "comportamento": "ENXAME"
+  },
+  "ATIRADOR": {
+    "vida": 60,
+    "tamanho": 28,
+    "velocidade": 1.5,
+    "dano": 15,
+    "cor": [100, 100, 255],
+    "comportamento": "ATIRADOR_COBERTURA",
+    "alcanceAtaque": 200,
+    "tempoRecargaTiro": 60
+  },
+  "EXPLOSIVO": {
+    "vida": 40,
+    "tamanho": 30,
+    "velocidade": 1.0,
+    "dano": 30,
+    "cor": [255, 100, 0],
+    "comportamento": "INVESTIDA_SUICIDA",
+    "raioExplosao": 65,
+    "danoExplosao": 2,
+    "framesPreparacaoExplosao": 45
+  },
+  "ESCUDADO": {
+    "vida": 80,
+    "tamanho": 40,
+    "velocidade": 1,
+    "dano": 20,
+    "cor": [150, 150, 150],
+    "comportamento": "PAREDE_ESCUDO",
+    "vidaEscudo": 40,
+    "escudoMaximo": 40
+  },
+  "MULTIPLICADOR": {
+    "vida": 30,
+    "tamanho": 25,
+    "velocidade": 2.5,
+    "dano": 10,
+    "cor": [200, 0, 200],
+    "comportamento": "GERADOR",
+    "podeMultiplicar": true
+  },
+  "TELETRANSPORTADOR": {
+    "vida": 50,
+    "tamanho": 25,
+    "velocidade": 2.5,
+    "dano": 12,
+    "cor": [0, 200, 200],
+    "comportamento": "GOLPE_PISCAR",
+    "tempoRecargaTeleporte": 180
+  },
+  "DRONE_RUST": {
+    "nome": "Drone Enferrujado",
+    "vida": 1,
+    "tamanho": 25,
+    "velocidade": 2.2,
+    "dano": 5,
+    "cor": [180, 100, 60],
+    "comportamento": "PERSEGUIR"
+  },
+  "MOLE_MUTANT": {
+    "nome": "Topeira Mutante",
+    "vida": 2,
+    "tamanho": 28,
+    "velocidade": 3.3,
+    "dano": 8,
+    "cor": [100, 150, 100],
+    "comportamento": "PERSEGUIR"
+  }
+}

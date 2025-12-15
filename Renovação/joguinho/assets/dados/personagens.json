@@ -1,0 +1,20 @@
+{
+  "ARLEN": {
+    "nome": "Arlen",
+    "cor": [100, 150, 255],
+    "vidaMaxima": 4,
+    "velocidade": 2.8
+  },
+  "KAEL": {
+    "nome": "Kael",
+    "cor": [100, 255, 150],
+    "vidaMaxima": 3,
+    "velocidade": 3.5
+  },
+  "LYRA": {
+    "nome": "Lyra", 
+    "cor": [220, 150, 255], 
+    "vidaMaxima": 3, 
+    "velocidade": 3.2
+  }
+}
